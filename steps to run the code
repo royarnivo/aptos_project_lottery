@@ -1,0 +1,49 @@
+Changes and Explanations:
+aptos_coin::AptosCoin Module:
+
+Added the correct import for AptosCoin, used for the prize distribution in distribute_prize. This ensures the contract interacts with Aptos' native token.
+Key Structural Fixes:
+
+has key was used in the structs since LotteryState and LotteryTicket need to be stored on-chain, tied to an account’s address.
+Random Number Generation:
+
+The draw_winner function uses the account address as part of the random number generation. While not fully secure, this simulates randomness for learning purposes. For a real-world system, this could be enhanced using more secure random sources, like an oracle.
+Correct Use of Option Types:
+
+The code uses the option::some and option::none to represent the presence or absence of a winning ticket.
+Distribute Prize:
+
+The distribute_prize function ensures that if a winner has been selected, they receive all the AptosCoin in the contract owner’s account.
+Steps to Run This Code:
+Set Up Your Development Environment: Follow the steps from the previous message to install Aptos CLI, create an account, and initialize a new Move project.
+
+Compile the Code:
+
+bash
+Copy code
+aptos move compile --save-metadata
+Deploy the Contract:
+
+bash
+Copy code
+aptos move publish
+Initialize the Lottery:
+
+bash
+Copy code
+aptos move run --function-id Lottery::initialize
+Buy Tickets: Participants can buy tickets by running:
+
+bash
+Copy code
+aptos move run --function-id Lottery::buy_ticket
+Draw the Winner: After enough tickets have been purchased, draw a winner by running:
+
+bash
+Copy code
+aptos move run --function-id Lottery::draw_winner
+Distribute the Prize: The final step is to distribute the prize to the winning ticket holder:
+
+bash
+Copy code
+aptos move run --function-id Lottery::distribute_prize
