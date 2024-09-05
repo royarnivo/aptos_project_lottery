@@ -1,0 +1,59 @@
+module Lottery {
+    use std::signer;
+    use std::vector;
+    use std::error;
+    use std::coin;
+    use aptos_framework::aptos_coin::AptosCoin;
+
+    // Struct representing a lottery ticket
+    struct LotteryTicket has key {
+        owner: address,
+        ticket_number: u64,
+    }
+
+    // State of the lottery system
+    struct LotteryState has key {
+        tickets: vector<LotteryTicket>,
+        total_tickets: u64,
+        winner_ticket: Option<u64>,
+    }
+
+    // Initialize the lottery by creating a LotteryState resource
+    public fun initialize(account: &signer) {
+        move_to(account, LotteryState {
+            tickets: vector::empty(),
+            total_tickets: 0,
+            winner_ticket: option::none(),
+        });
+    }
+
+    // Function to buy a lottery ticket
+    public fun buy_ticket(account: &signer, lottery_state: &mut LotteryState) acquires LotteryState {
+        let ticket_number = lottery_state.total_tickets + 1;
+        let ticket = LotteryTicket {
+            owner: signer::address_of(account),
+            ticket_number,
+        };
+        vector::push_back(&mut lottery_state.tickets, ticket);
+        lottery_state.total_tickets = ticket_number;
+    }
+
+    // Function to draw a winner using the account address as randomness
+    public fun draw_winner(account: &signer, lottery_state: &mut LotteryState) acquires LotteryState {
+        let total_tickets = lottery_state.total_tickets;
+        let block_hash = bcs::to_bytes(&signer::address_of(account));
+        let random_number = bcs::to_uint64(block_hash) % total_tickets;
+        lottery_state.winner_ticket = option::some(random_number);
+    }
+
+    // Function to distribute the prize to the winner
+    public fun distribute_prize(account: &signer, lottery_state: &mut LotteryState) acquires LotteryState {
+        let winner_ticket = option::borrow(&lottery_state.winner_ticket);
+        if (option::is_some(winner_ticket)) {
+            let winner = vector::borrow(&lottery_state.tickets, *winner_ticket);
+            coin::transfer<AptosCoin>(account, winner.owner, coin::balance<AptosCoin>(account));
+        } else {
+            error::abort(1);
+        }
+    }
+}
